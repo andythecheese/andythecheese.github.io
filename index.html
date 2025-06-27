@@ -2,88 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Cheese Login Tester — v57</title>
+  <title>Cheese Control Panel — v57</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
-      max-width: 400px;
-      margin: 5rem auto;
+      margin: 3rem auto;
       padding: 2rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      background: #fffefc;
+      max-width: 600px;
+      background: #fcfcf9;
     }
-    h2 {
-      margin-bottom: 0.5rem;
+    h1 {
+      margin-bottom: 1rem;
+    }
+    ul {
+      padding-left: 1.2rem;
+    }
+    li {
+      margin: 0.75rem 0;
+    }
+    a {
+      color: #2a5db0;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
     }
     #version {
+      margin-top: 2rem;
       font-size: 0.9rem;
       color: #888;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-    input, button {
-      width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.6rem;
-      font-size: 1rem;
-    }
-    #status {
-      margin-top: 1rem;
-      color: red;
     }
   </style>
 </head>
 <body>
-  <!-- Allowed Origins for Supabase CORS -->
-  <!-- 
-    https://www.mycheesesite.com
-    https://andythecheese.github.io
-  -->
+  <h1>🧀 Cheese Site Links</h1>
+  <div id="version"><strong>Version: v57</strong> — Modal-free login test, origin mapping, and no ambiguity</div>
 
-  <h2>Cheese Login</h2>
-  <div id="version">Version: v57 — Static Login Test</div>
-
-  <form id="login-form">
-    <input type="email" id="email" placeholder="Email" required />
-    <input type="password" id="password" placeholder="Password" required />
-    <button type="submit">Log In</button>
-  </form>
-
-  <div id="status"></div>
-
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    // 🔧 Replace with your actual Supabase project URL + anon key:
-    const supabase = createClient("https://your-project-url.supabase.co", "your-anon-key");
-
-    const form = document.getElementById("login-form");
-    const status = document.getElementById("status");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      status.textContent = "🔄 Trying to log in...";
-
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      try {
-        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          console.error("❌ Login error:", error);
-          status.textContent = "❌ " + error.message;
-        } else {
-          console.log("✅ Login success:", data);
-          status.style.color = "green";
-          status.textContent = "✅ Login successful!";
-        }
-      } catch (err) {
-        console.error("❌ Unexpected error:", err);
-        status.textContent = "❌ Network or unexpected error.";
-      }
-    });
-  </script>
+  <ul>
+    <li><a href="blog.html" target="_blank">📝 blog.html (local test version)</a></li>
+    <li><a href="https://andythecheese.github.io/blog/blog.html" target="_blank">🌐 blog.html (GitHub Pages live)</a></li>
+    <li><a href="https://andythecheese.github.io/blog/index.html" target="_blank">🌐 index.html (GitHub Pages live)</a></li>
+    <li><a href="https://github.com/andythecheese/blog/blob/main/blog.html" target="_blank">📁 blog.html (GitHub file viewer)</a></li>
+    <li><a href="https://github.com/andythecheese/blog/blob/main/index.html" target="_blank">📁 index.html (GitHub file viewer)</a></li>
+    <li><a href="https://www.mycheesesite.com/blog.html" target="_blank">🧀 blog.html (production site)</a></li>
+    <li><a href="https://www.mycheesesite.com/index.html" target="_blank">🧀 index.html (production site)</a></li>
+  </ul>
 </body>
 </html>
