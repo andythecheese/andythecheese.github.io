@@ -5,37 +5,137 @@
   <title>Cheese Blog Editor</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; }
-    input, textarea, button { display: block; width: 100%; margin-bottom: 1rem; padding: 0.5rem; }
-    label { font-weight: bold; margin-top: 1rem; display: block; }
-    #preview img { max-width: 100%; height: auto; margin-bottom: 0.5rem; cursor: pointer; border: 3px solid transparent; }
-    .thumbnail { border-color: darkgreen; }
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: 2rem auto;
+    }
+    input, textarea, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 1rem;
+      display: block;
+    }
+    #preview img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+    .thumbnail {
+      border-color: darkgreen;
+    }
+    #modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    #modal form {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+    #logout {
+      background: #eee;
+      color: #333;
+      border: none;
+      font-size: 0.9em;
+      width: auto;
+      margin-top: -1rem;
+      margin-bottom: 2rem;
+    }
   </style>
 </head>
 <body>
+  <div id="modal">
+    <form id="login-form">
+      <h2>Author Login</h2>
+      <label>Email</label>
+      <input type="email" id="email" required />
+      <label>Password</label>
+      <input type="password" id="password" required />
+      <button type="submit">Log in</button>
+      <p id="login-status"></p>
+    </form>
+  </div>
+
   <h1>🧀 Cheese Blog Editor</h1>
+  <button id="logout">Log out</button>
+
   <form id="post-form">
     <label for="title">Post Title</label>
     <input type="text" id="title" required />
+
+    <label for="date">Post Date</label>
+    <input type="date" id="date" required />
 
     <label for="body">Post Body</label>
     <textarea id="body" rows="10" required></textarea>
 
     <label for="images">Upload Images</label>
     <input type="file" id="images" multiple accept="image/*" />
-
     <div id="preview"></div>
 
+    <button type="button" id="showPreview">Preview</button>
     <button type="submit">Publish</button>
+
     <p id="status"></p>
   </form>
+
+  <div id="post-preview"></div>
 
   <script>
     const supabase = supabase.createClient(
       'https://kavpehxoqxcsrxyfvhyg.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthdnBlaHhvcXhjc3J4eWZ2aHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMTEyOTQsImV4cCI6MjA2NjU4NzI5NH0.3xPU3eWEFHwcLQLBKVkco7qpNJv2VDSk8C8NgWx2Ld0'
+      'YOUR_PUBLIC_ANON_KEY_HERE'
     );
 
+    const modal = document.getElementById('modal');
+    const loginForm = document.getElementById('login-form');
+    const loginStatus = document.getElementById('login-status');
+    const logoutBtn = document.getElementById('logout');
+    const postForm = document.getElementById('post-form');
+
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) modal.style.display = 'flex';
+      else modal.style.display = 'none';
+    };
+
+    checkAuth();
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        loginStatus.textContent = '🚫 ' + error.message;
+        loginStatus.style.color = 'red';
+      } else {
+        loginStatus.textContent = '';
+        modal.style.display = 'none';
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    // Upload logic
     let uploadedImages = [];
     let selectedThumbnail = '';
 
@@ -47,18 +147,13 @@
       selectedThumbnail = '';
 
       for (let file of files) {
-        const fileExt = file.name.split('.').pop();
         const filePath = `${Date.now()}_${file.name}`;
-
-        const { error } = await supabase.storage
-          .from('blog-images')
-          .upload(filePath, file, { contentType: file.type });
+        const { error } = await supabase.storage.from('blog-images').upload(filePath, file, {
+          contentType: file.type
+        });
 
         if (!error) {
-          const { data } = supabase.storage
-            .from('blog-images')
-            .getPublicUrl(filePath);
-
+          const { data } = supabase.storage.from('blog-images').getPublicUrl(filePath);
           const img = document.createElement('img');
           img.src = data.publicUrl;
           img.alt = file.name;
@@ -76,16 +171,39 @@
       }
     });
 
-    document.getElementById('post-form').addEventListener('submit', async (e) => {
+    // Preview
+    document.getElementById('showPreview').addEventListener('click', () => {
+      const title = document.getElementById('title').value;
+      const date = document.getElementById('date').value;
+      const body = document.getElementById('body').value;
+      const postPreview = document.getElementById('post-preview');
+
+      const imgTag = selectedThumbnail
+        ? `<img src="${supabase.storage.from('blog-images').getPublicUrl(selectedThumbnail).data.publicUrl}" style="max-width:100%" />`
+        : '';
+
+      postPreview.innerHTML = `
+        <hr>
+        <h2>${title}</h2>
+        <p><em>Posted on ${date}</em></p>
+        ${imgTag}
+        <p>${body.replace(/\n/g, '<br>')}</p>
+        <hr>
+      `;
+    });
+
+    // Submit
+    postForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('title').value;
+      const date = document.getElementById('date').value;
       const body = document.getElementById('body').value;
       const status = document.getElementById('status');
 
       const { error } = await supabase.from('posts').insert([{
         title,
         body,
-        published_at: new Date().toISOString(),
+        published_at: date,
         thumbnail_url: selectedThumbnail || null
       }]);
 
@@ -95,10 +213,11 @@
       } else {
         status.textContent = '✅ Post published!';
         status.style.color = 'green';
-        e.target.reset();
-        document.getElementById('preview').innerHTML = '';
+        postForm.reset();
         uploadedImages = [];
         selectedThumbnail = '';
+        document.getElementById('preview').innerHTML = '';
+        document.getElementById('post-preview').innerHTML = '';
       }
     });
   </script>
