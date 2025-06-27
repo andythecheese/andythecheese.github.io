@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cheese Blog Editor</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    input, textarea, button { display: block; width: 100%; margin-bottom: 1rem; padding: 0.5rem; }
+    label { font-weight: bold; margin-top: 1rem; display: block; }
+  </style>
+</head>
+<body>
+  <h1>🧀 Cheese Blog Editor</h1>
+  <form id="post-form">
+    <label for="title">Post Title</label>
+    <input type="text" id="title" required />
+
+    <label for="body">Post Body</label>
+    <textarea id="body" rows="10" required></textarea>
+
+    <label for="thumbnail">Thumbnail URL</label>
+    <input type="url" id="thumbnail" />
+
+    <label for="slug">Slug (e.g. cheese-folklore)</label>
+    <input type="text" id="slug" required />
+
+    <button type="submit">Publish</button>
+    <p id="status"></p>
+  </form>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://kavpehxoqxcsrxyfvhyg.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthdnBlaHhvcXhjc3J4eWZ2aHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMTEyOTQsImV4cCI6MjA2NjU4NzI5NH0.3xPU3eWEFHwcLQLBKVkco7qpNJv2VDSk8C8NgWx2Ld0'
+    );
+
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const body = document.getElementById('body').value;
+      const thumbnail = document.getElementById('thumbnail').value;
+      const slug = document.getElementById('slug').value;
+      const status = document.getElementById('status');
+
+      const { error } = await supabase.from('posts').insert([{
+        title,
+        body,
+        slug,
+        thumbnail_url: thumbnail,
+        published_at: new Date().toISOString()
+      }]);
+
+      if (error) {
+        status.textContent = '🚫 ' + error.message;
+        status.style.color = 'red';
+      } else {
+        status.textContent = '✅ Post published!';
+        status.style.color = 'green';
+        e.target.reset();
+      }
+    });
+  </script>
+</body>
+</html>
