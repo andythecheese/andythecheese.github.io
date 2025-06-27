@@ -5,9 +5,11 @@
   <title>Cheese Blog Editor</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; }
     input, textarea, button { display: block; width: 100%; margin-bottom: 1rem; padding: 0.5rem; }
     label { font-weight: bold; margin-top: 1rem; display: block; }
+    #preview img { max-width: 100%; height: auto; margin-bottom: 0.5rem; cursor: pointer; border: 3px solid transparent; }
+    .thumbnail { border-color: darkgreen; }
   </style>
 </head>
 <body>
@@ -19,6 +21,11 @@
     <label for="body">Post Body</label>
     <textarea id="body" rows="10" required></textarea>
 
+    <label for="images">Upload Images</label>
+    <input type="file" id="images" multiple accept="image/*" />
+
+    <div id="preview"></div>
+
     <button type="submit">Publish</button>
     <p id="status"></p>
   </form>
@@ -29,9 +36,48 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthdnBlaHhvcXhjc3J4eWZ2aHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMTEyOTQsImV4cCI6MjA2NjU4NzI5NH0.3xPU3eWEFHwcLQLBKVkco7qpNJv2VDSk8C8NgWx2Ld0'
     );
 
+    let uploadedImages = [];
+    let selectedThumbnail = '';
+
+    document.getElementById('images').addEventListener('change', async (event) => {
+      const files = event.target.files;
+      const preview = document.getElementById('preview');
+      preview.innerHTML = '';
+      uploadedImages = [];
+      selectedThumbnail = '';
+
+      for (let file of files) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${Date.now()}_${file.name}`;
+
+        const { error } = await supabase.storage
+          .from('blog-images')
+          .upload(filePath, file, { contentType: file.type });
+
+        if (!error) {
+          const { data } = supabase.storage
+            .from('blog-images')
+            .getPublicUrl(filePath);
+
+          const img = document.createElement('img');
+          img.src = data.publicUrl;
+          img.alt = file.name;
+          img.dataset.filename = filePath;
+
+          img.addEventListener('click', () => {
+            document.querySelectorAll('#preview img').forEach(i => i.classList.remove('thumbnail'));
+            img.classList.add('thumbnail');
+            selectedThumbnail = filePath;
+          });
+
+          preview.appendChild(img);
+          uploadedImages.push(filePath);
+        }
+      }
+    });
+
     document.getElementById('post-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const title = document.getElementById('title').value;
       const body = document.getElementById('body').value;
       const status = document.getElementById('status');
@@ -39,7 +85,8 @@
       const { error } = await supabase.from('posts').insert([{
         title,
         body,
-        published_at: new Date().toISOString()
+        published_at: new Date().toISOString(),
+        thumbnail_url: selectedThumbnail || null
       }]);
 
       if (error) {
@@ -49,6 +96,9 @@
         status.textContent = '✅ Post published!';
         status.style.color = 'green';
         e.target.reset();
+        document.getElementById('preview').innerHTML = '';
+        uploadedImages = [];
+        selectedThumbnail = '';
       }
     });
   </script>
