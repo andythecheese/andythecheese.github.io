@@ -3,38 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>Cheese Blog Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 700px;
-      margin: 2rem auto;
-    }
-    input, textarea, button {
-      display: block;
-      width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 1rem;
-      display: block;
-    }
-    #preview img {
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 0.5rem;
-      cursor: pointer;
-      border: 3px solid transparent;
-    }
-    .thumbnail {
-      border-color: darkgreen;
-    }
     #modal {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      inset: 0;
       background: rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
@@ -46,15 +21,40 @@
       padding: 2rem;
       border-radius: 8px;
       box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    #modal input, #modal button {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+    }
+    #editor-content img {
+      max-width: 100%;
+      height: auto;
+      margin: 0.5rem 0;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+    .thumbnail {
+      border-color: darkgreen;
     }
     #logout {
       background: #eee;
       color: #333;
       border: none;
       font-size: 0.9em;
-      width: auto;
+      padding: 0.3rem 0.6rem;
       margin-top: -1rem;
       margin-bottom: 2rem;
+      cursor: pointer;
+    }
+    #back-link {
+      font-size: 0.9em;
+      margin-top: 1rem;
     }
   </style>
 </head>
@@ -62,12 +62,11 @@
   <div id="modal">
     <form id="login-form">
       <h2>Author Login</h2>
-      <label>Email</label>
-      <input type="email" id="email" required />
-      <label>Password</label>
-      <input type="password" id="password" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Log in</button>
-      <p id="login-status"></p>
+      <p id="login-status" style="color: red;"></p>
+      <p id="back-link"><a href="/index.html">← Back to blog</a></p>
     </form>
   </div>
 
@@ -75,18 +74,18 @@
   <button id="logout">Log out</button>
 
   <form id="post-form">
-    <label for="title">Post Title</label>
+    <label for="title">Title of your cheese tale</label>
     <input type="text" id="title" required />
 
-    <label for="date">Post Date</label>
+    <label for="date">When did this happen?</label>
     <input type="date" id="date" required />
 
-    <label for="body">Post Body</label>
+    <label for="body">What happened (and how it smelled)</label>
     <textarea id="body" rows="10" required></textarea>
 
-    <label for="images">Upload Images</label>
+    <label for="images">Add some delicious visuals</label>
     <input type="file" id="images" multiple accept="image/*" />
-    <div id="preview"></div>
+    <div id="editor-content"></div>
 
     <button type="button" id="showPreview">Preview</button>
     <button type="submit">Publish</button>
@@ -107,11 +106,14 @@
     const loginStatus = document.getElementById('login-status');
     const logoutBtn = document.getElementById('logout');
     const postForm = document.getElementById('post-form');
+    const editorContent = document.getElementById('editor-content');
+    const previewBox = document.getElementById('post-preview');
+    let uploadedImages = [];
+    let selectedThumbnail = '';
 
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) modal.style.display = 'flex';
-      else modal.style.display = 'none';
+      modal.style.display = session ? 'none' : 'flex';
     };
 
     checkAuth();
@@ -122,8 +124,7 @@
       const password = document.getElementById('password').value;
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        loginStatus.textContent = '🚫 ' + error.message;
-        loginStatus.style.color = 'red';
+        loginStatus.textContent = error.message;
       } else {
         loginStatus.textContent = '';
         modal.style.display = 'none';
@@ -135,78 +136,57 @@
       location.reload();
     });
 
-    // Upload logic
-    let uploadedImages = [];
-    let selectedThumbnail = '';
-
-    document.getElementById('images').addEventListener('change', async (event) => {
-      const files = event.target.files;
-      const preview = document.getElementById('preview');
-      preview.innerHTML = '';
+    document.getElementById('images').addEventListener('change', async (e) => {
+      editorContent.innerHTML = '';
       uploadedImages = [];
       selectedThumbnail = '';
-
-      for (let file of files) {
+      for (let file of e.target.files) {
         const filePath = `${Date.now()}_${file.name}`;
-        const { error } = await supabase.storage.from('blog-images').upload(filePath, file, {
-          contentType: file.type
-        });
-
+        const { error } = await supabase.storage.from('blog-images').upload(filePath, file);
         if (!error) {
           const { data } = supabase.storage.from('blog-images').getPublicUrl(filePath);
           const img = document.createElement('img');
           img.src = data.publicUrl;
           img.alt = file.name;
           img.dataset.filename = filePath;
-
           img.addEventListener('click', () => {
-            document.querySelectorAll('#preview img').forEach(i => i.classList.remove('thumbnail'));
+            document.querySelectorAll('#editor-content img').forEach(i => i.classList.remove('thumbnail'));
             img.classList.add('thumbnail');
             selectedThumbnail = filePath;
           });
-
-          preview.appendChild(img);
           uploadedImages.push(filePath);
+          editorContent.appendChild(img);
         }
       }
     });
 
-    // Preview
     document.getElementById('showPreview').addEventListener('click', () => {
       const title = document.getElementById('title').value;
       const date = document.getElementById('date').value;
       const body = document.getElementById('body').value;
-      const postPreview = document.getElementById('post-preview');
-
-      const imgTag = selectedThumbnail
-        ? `<img src="${supabase.storage.from('blog-images').getPublicUrl(selectedThumbnail).data.publicUrl}" style="max-width:100%" />`
+      const imgHTML = selectedThumbnail
+        ? `<img src="${supabase.storage.from('blog-images').getPublicUrl(selectedThumbnail).data.publicUrl}" />`
         : '';
-
-      postPreview.innerHTML = `
-        <hr>
-        <h2>${title}</h2>
+      previewBox.innerHTML = `
+        <hr><h2>${title}</h2>
         <p><em>Posted on ${date}</em></p>
-        ${imgTag}
-        <p>${body.replace(/\n/g, '<br>')}</p>
-        <hr>
+        ${imgHTML}
+        <p>${body.replace(/\n/g, '<br>')}</p><hr>
       `;
     });
 
-    // Submit
     postForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('title').value;
       const date = document.getElementById('date').value;
       const body = document.getElementById('body').value;
       const status = document.getElementById('status');
-
       const { error } = await supabase.from('posts').insert([{
         title,
         body,
         published_at: date,
         thumbnail_url: selectedThumbnail || null
       }]);
-
       if (error) {
         status.textContent = '🚫 ' + error.message;
         status.style.color = 'red';
@@ -214,10 +194,10 @@
         status.textContent = '✅ Post published!';
         status.style.color = 'green';
         postForm.reset();
+        editorContent.innerHTML = '';
+        previewBox.innerHTML = '';
         uploadedImages = [];
         selectedThumbnail = '';
-        document.getElementById('preview').innerHTML = '';
-        document.getElementById('post-preview').innerHTML = '';
       }
     });
   </script>
