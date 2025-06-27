@@ -19,12 +19,6 @@
     <label for="body">Post Body</label>
     <textarea id="body" rows="10" required></textarea>
 
-    <label for="thumbnail">Thumbnail URL</label>
-    <input type="url" id="thumbnail" />
-
-    <label for="slug">Slug (e.g. cheese-folklore)</label>
-    <input type="text" id="slug" required />
-
     <button type="submit">Publish</button>
     <p id="status"></p>
   </form>
@@ -40,15 +34,11 @@
 
       const title = document.getElementById('title').value;
       const body = document.getElementById('body').value;
-      const thumbnail = document.getElementById('thumbnail').value;
-      const slug = document.getElementById('slug').value;
       const status = document.getElementById('status');
 
       const { error } = await supabase.from('posts').insert([{
         title,
         body,
-        slug,
-        thumbnail_url: thumbnail,
         published_at: new Date().toISOString()
       }]);
 
