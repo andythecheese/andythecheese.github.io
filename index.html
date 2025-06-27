@@ -2,57 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>My Cheese Site</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Andy’s Cheese Blog</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #fffbe6;
+      color: #333;
+      text-align: center;
+      padding: 3rem;
+    }
+    h1 {
+      margin-bottom: 2rem;
+    }
+    a {
+      display: block;
+      margin: 1rem 0;
+      font-size: 1.2rem;
+      color: darkblue;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>🧀 Andy’s Blog Archive</h1>
-  <ul id="postList">Loading posts…</ul>
+  <h1>🧀 Welcome to My Cheese Site</h1>
 
-  <div class="login-link">
-    <p><a href="/editor.html">Author login</a></p>
-  </div>
+  <a href="/blog/blog.html">📖 View the Blog</a>
+  <a href="/blog/editor.html">✍️ Open the Editor</a>
+  <a href="https://github.com/andylear/cheese-blog" target="_blank">💻 View the GitHub Repo</a>
 
-  <script>
-    const postList = document.getElementById("postList");
-
-    async function fetchTitle(url) {
-      try {
-        const res = await fetch(url);
-        const text = await res.text();
-        const match = text.match(/<title>(.*?)<\/title>/i);
-        return match ? match[1] : url;
-      } catch {
-        return null;
-      }
-    }
-
-    async function listPosts() {
-      postList.innerHTML = "";
-
-      const posts = [
-        { url: "june2025/04.html" }
-      ];
-
-      for (const post of posts) {
-        const title = await fetchTitle(post.url);
-        if (title) {
-          const li = document.createElement("li");
-          const a = document.createElement("a");
-          a.href = post.url;
-          a.textContent = title;
-          li.appendChild(a);
-          postList.appendChild(li);
-        }
-      }
-
-      if (postList.children.length === 0) {
-        postList.innerHTML = "<li class='error'>No posts found. Check paths or filenames.</li>";
-      }
-    }
-
-    listPosts();
-  </script>
 </body>
 </html>
