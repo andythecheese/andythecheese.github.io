@@ -1,0 +1,44 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: #fffdf7;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  color: #7b3f00;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 1em;
+}
+
+a {
+  text-decoration: none;
+  color: #0645ad;
+  font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: crimson;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.login-link {
+  text-align: center;
+  font-size: 0.9em;
+  margin-top: 3rem;
+}
