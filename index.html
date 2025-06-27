@@ -2,38 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Cheese Site</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="/style.css" />
+  <title>Cheese Login Tester — v57</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #fffbe6;
-      color: #333;
+      font-family: system-ui, sans-serif;
+      max-width: 400px;
+      margin: 5rem auto;
+      padding: 2rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fffefc;
+    }
+    h2 {
+      margin-bottom: 0.5rem;
+    }
+    #version {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 1rem;
       text-align: center;
-      padding: 3rem;
     }
-    h1 {
-      margin-bottom: 2rem;
+    input, button {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.6rem;
+      font-size: 1rem;
     }
-    a {
-      display: block;
-      margin: 1rem 0;
-      font-size: 1.2rem;
-      color: darkblue;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
+    #status {
+      margin-top: 1rem;
+      color: red;
     }
   </style>
 </head>
 <body>
-  <h1>🧀 Welcome to My Cheese Site</h1>
+  <!-- Allowed Origins for Supabase CORS -->
+  <!-- 
+    https://www.mycheesesite.com
+    https://andythecheese.github.io
+  -->
 
-  <a href="/blog/blog.html">📖 View the Blog</a>
-  <a href="/blog/editor.html">✍️ Open the Editor</a>
-  <a href="https://github.com/andythecheese/andythecheese.github.io" target="_blank">💻 View the GitHub Repo</a>
+  <h2>Cheese Login</h2>
+  <div id="version">Version: v57 — Static Login Test</div>
 
+  <form id="login-form">
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit">Log In</button>
+  </form>
+
+  <div id="status"></div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    // 🔧 Replace with your actual Supabase project URL + anon key:
+    const supabase = createClient("https://your-project-url.supabase.co", "your-anon-key");
+
+    const form = document.getElementById("login-form");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      status.textContent = "🔄 Trying to log in...";
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          console.error("❌ Login error:", error);
+          status.textContent = "❌ " + error.message;
+        } else {
+          console.log("✅ Login success:", data);
+          status.style.color = "green";
+          status.textContent = "✅ Login successful!";
+        }
+      } catch (err) {
+        console.error("❌ Unexpected error:", err);
+        status.textContent = "❌ Network or unexpected error.";
+      }
+    });
+  </script>
 </body>
 </html>
