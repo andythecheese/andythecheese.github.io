@@ -1,0 +1,18 @@
+---
+layout: default
+title: Blog
+---
+
+<h1>📝 Cheese Cellar Chronicles</h1>
+<p>All the latest posts from the depths of dairy discovery:</p>
+
+<ul>
+  {% for post in site.posts %}
+    <li>
+      <a href="{{ post.url }}">{{ post.title }}</a>
+      <small>— {{ post.date | date: "%B %-d, %Y" }}</small>
+    </li>
+  {% endfor %}
+</ul>
+
+<p><a href="/">← Return to Home</a></p>
