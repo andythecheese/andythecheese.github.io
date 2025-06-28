@@ -1,8 +1,8 @@
 title: Andy the Cheese
 description: A whimsical journey through curds, culture, and code
 author: Andy
-theme: minima
-baseurl: "" # Leave this empty for GitHub Pages root
+theme: jekyll-theme-cayman
+baseurl: "" # Leave empty for GitHub Pages root
 url: "https://andythecheese.github.io"
 permalink: pretty
 markdown: kramdown
@@ -11,4 +11,4 @@ plugins:
   - jekyll-seo-tag
 
 # Version tracking
-version: 1.0.0
+version: 1.1.0
